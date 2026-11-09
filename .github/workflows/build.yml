@@ -87,13 +87,19 @@ jobs:
           [ "$ok" -eq "$expected" ] || { echo "::error::Nem todos os ZIPs passaram na verificação."; exit 1; }
       - name: "Verificação 2/4 - extrair para estrutura organizada e detectar conflitos"
         run: |
-          base64 -d <<'B64' | gunzip | python3 -
-          H4sIAAAAAAACA71WUW8jNRB+z68Y7QNa65ZtiwSV9i6VjlwPKgE9pQGdrkQrZ9duTXbtxXaSXkp+DU8g8chLX/PHmPFu0iQtSEgIS2026/E338x8M46qG2M9GJeA+4j/lqqRqhIJFKaqROGV0a7nbAF9tEmFnitr9HV0NRzkw8vLUTR+CVY0B7vD83eXw1H+5mIYjXuI6HD/ukqdt6qJGUhjoQKlwTRCxzK6R4TVEdml/s5HDJSErXULkDpkGU/Fx37F60nJocnIY8P9bTrhTmhei7hhrGcWWljyt8M/LYXk
-          s8qXqvBxpZxnPaKwJAoEnvUA10L520346QfVvMXPeMmAO1jK1oQWnVThpEyVlobwYva4Twv5q1S5vFQWw6UDKaESSQyLW+/IWRzl+bevB5dX74+iAwBahdFe6ZnY22jDu37EG6e8wSyWcbxM0M1gOEg6b7lTS4EZmWnHpaAK6EBeh8y3aUKieo8RMiG+UZpGZIabTaV8eD/uoXUL1pJtrNK4lWXCWmOzbMBrpW8NomonbmYWnzT+fbh457Io6Y5eZ5+P2UvSWiruEPmE9RyGgfTudQbzlmGCD1uSqfKidnGr
-          CtTLnMEZnADXZfh6X4QzOSo2gZyOzVcM+n04WfVKJeW/QH4e6oyQKrMQ9h9U5UQnqp3sZhBOXes0fKKUU16WsWa9AhVLvKYbXtOOVzB8PuBVr823jLj9eabmmNn1g1aFQT/3ZNY6ZSv4BcoZVq3gJdWiXP+OOno0o2wHo6gTloxQaRKrjNalCLIT64fSdPaUw2BfkNTXf4pgVXO1fnDFrOIbXIqJrSLWC32019mNNZMKQwrdnUDEo9BVjUz27aS6E+WBkexab7d6oeWI1yZTDFV1PH5sodrdYHplNOgC24sL
-          RI2KWGUQwQsgT+lPRmH6DqfJsh1U2Fb5Rg1s62Gr/QW3WumbLCM08ouY8OkZGog5R6kIMFinyqvaQMML4wXExpbIgVeST9a/YW04i3aQZbqwGFfcgf2oI+wXuXm7E1QIouZYXQwKYzx0RCe3udsojMq0SVv21CnBU5l/NQdVPsLe3qk4jWNRojRXwYs3nleY8uP/Y7D+R6O0FM6391aoexABXnTJjgf291P9qRMEqvlU4K6LCTsBHHDO52baH9mZwCI+P9F3jm244JcgQYJhhzh7p9vcyjT0kQo5tV1XtRyi
-          xaRtpMVTxotbjBMI9OkerQmmx6ZW8DI+gVev4LNj9qwd3SLGwySDCRpPn7VZdAKb7EPUpqRJGCu8DbzAqKuce2/hDCfeFww+gWNzenp6WAY6Fe7/4hYfu0jp5T54q8oXeBVsZyd6sXz9B03G+7C9gu04bbjlqGxb0BQLKdz9TfPVxejr77/Mz7/7IRq342nbMm8vvjm/ys/fj4avB6PzN/0OOXTGXz8veqhgCQAA
-          B64
+          set -uo pipefail
+          while IFS= read -r z; do
+            echo "Extraindo $z"
+            unzip -oq "$z" -d "$SRC_ROOT" || echo "::error::Falha ao extrair $z"
+          done < "$REPORT_DIR/zips.txt"
+          # se tudo veio dentro de uma única pasta raiz, sobe um nível
+          n=$(find "$SRC_ROOT" -mindepth 1 -maxdepth 1 | wc -l)
+          if [ "$n" -eq 1 ] && [ -d "$(find "$SRC_ROOT" -mindepth 1 -maxdepth 1)" ]; then
+            d=$(find "$SRC_ROOT" -mindepth 1 -maxdepth 1)
+            echo "Subindo conteúdo de $d"
+            shopt -s dotglob; mv "$d"/* "$SRC_ROOT"/; rmdir "$d"
+          fi
+          echo "Conteúdo de $SRC_ROOT:"; ls -la "$SRC_ROOT" | head -60
       - name: "Completar arquivos faltantes a partir do repositório original"
         run: |
           set -eu
