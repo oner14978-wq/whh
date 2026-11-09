@@ -288,6 +288,14 @@ jobs:
               -keyalg RSA -keysize 2048 -validity 10000 \
               -dname "CN=Android Debug,O=Android,C=US"
           fi
+      - name: Corrigir import kotlinx.coroutines.cancel (FastStartupLoader)
+        run: |
+          F=$(find "$SRC_ROOT" -type f -name FastStartupLoader.kt | head -1)
+          if [ -n "$F" ] && ! grep -q '^import kotlinx.coroutines.cancel$' "$F"; then
+            sed -i '0,/^import /s//import kotlinx.coroutines.cancel\nimport /' "$F"
+            echo "Import adicionado em $F"
+            grep -n 'import kotlinx.coroutines' "$F"
+          fi
       - name: Compilar Debug
         if: env.BUILD_DEBUG == 'true'
         run: |
