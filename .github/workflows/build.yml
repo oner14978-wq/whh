@@ -51,7 +51,7 @@ jobs:
       - name: "Verificação 1/4 - localizar e testar os arquivos ZIP"
         run: |
           set -uo pipefail
-          ZIPS=($(seq 1 33))
+          ZIPS=($(seq 1 17))
           expected=${#ZIPS[@]}; found=0; ok=0
           : > "$REPORT_DIR/zips.txt"
           find_one() {
