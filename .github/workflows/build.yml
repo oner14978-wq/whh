@@ -51,21 +51,17 @@ jobs:
       - name: "Verificação 1/4 - localizar e testar os arquivos ZIP"
         run: |
           set -uo pipefail
-          ZIPS=(
-            01 02 03 04 05 06 07 08 09 10 11
-            12 13 14 15 16 17 18 19 20 21 22
-            23 24 25 26 27 28 29 30 31 32 33
-          )
+          ZIPS=($(seq 1 33))
           expected=${#ZIPS[@]}; found=0; ok=0
           : > "$REPORT_DIR/zips.txt"
           find_one() {
-            find "$GITHUB_WORKSPACE" -type f -name "Zali*-$1.zip" -not -path '*/.git/*' 2>/dev/null \
+            find "$GITHUB_WORKSPACE" -type f \( -iname "Cat$1.zip" -o -iname "Cat$(printf '%02d' "$1").zip" \) -not -path '*/.git/*' 2>/dev/null \
               | awk '{ print length($0) "\t" $0 }' | sort -n | cut -f2-
           }
           for n in "${ZIPS[@]}"; do
             mapfile -t hits < <(find_one "$n")
             if [ "${#hits[@]}" -eq 0 ]; then
-              echo "::error::ZIP número $n ausente no repositório (esperado Zali*-$n.zip)"
+              echo "::error::ZIP número $n ausente no repositório (esperado Cat$n.zip)"
               continue
             fi
             found=$((found+1))
@@ -328,5 +324,4 @@ jobs:
           name: Cat Launcher
           path: /tmp/apks/*.apk
           if-no-files-found: warn
-
           
